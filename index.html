@@ -1,0 +1,189 @@
+<script type="text/javascript" src="https://unpkg.com/vue"></script>
+<link href="https://unpkg.com/todomvc-app-css@2.1.0/index.css" rel="stylesheet"/>
+
+
+<div id="app">
+
+
+<section class="todoapp">
+
+
+ <header class="header">
+    <h1>todos</h1>
+    <input class="new-todo"
+      autocomplete="off"
+      placeholder="What needs to be done?"
+      v-model="addnewele"
+      @keyup.enter="addNew()"
+      >
+  </header>
+
+
+  <section class="main" >
+    <input v-model="markAll" class="toggle-all" id="toggle-all" type="checkbox" >
+    <label  for="toggle-all">Mark all as complete</label>
+
+    <ul class="todo-list">
+      <li class="todo "   v-for="todo in filterdTodos" @dblclick="showEdit(todo)" @keyup.enter="editing(todo)" @keyup.esc="editingEsc(todo)"  :class="{completed:todo.compleated,editing:todo==edit }" >
+        <div class="view">
+          <input class="toggle" type="checkbox" v-model="todo.compleated">
+          <label>{{todo.title}}</label>
+          <button class="destroy" @click="destroy(todo)"></button>
+        </div>
+        <input class="edit" type="text" v-model="todo.title"  >
+      </li>
+    </ul>
+  </section>
+
+
+
+  <footer class="footer">
+    <span class="todo-count">
+      <strong>{{  numitems }}</strong> {{items}} left
+    </span>
+    <ul class="filters">
+      <li><a href="#" @click.prevent="visibility='all'" :class="{selected:visibility=='all'}">All</a></li>
+      <li><a href="#" @click.prevent="visibility='active'" :class="{selected:visibility=='active'}">Active</a></li>
+      <li><a href="#" @click.prevent="visibility='completed'" :class="{selected:visibility=='completed'}" >Completed</a></li>
+     
+    </ul>
+    <button class="clear-completed" @click="clearAll()">
+      Clear completed
+    </button>
+  </footer>
+</section>
+  
+</div>
+
+
+
+<script src="js/vue.js"></script>
+<script type="text/javascript">
+ var filters = {
+    
+        all:function(todos){
+            return todos;
+         },
+         
+         active:function(todos){
+           var arr=[];
+          for (var i = 0; i < todos.length; i++) {
+            if( !todos[i].compleated )
+            arr.push(todos[i]);
+          }
+          return arr;
+         
+           
+         },
+
+          
+          completed:function(todos){
+              var arr=[];
+          for (var i = 0; i < todos.length; i++) {
+            if( todos[i].compleated )
+            arr.push(todos[i]);
+          }
+          return arr;
+         
+           
+         },
+ 
+   }
+
+
+
+  var todos_storage = {
+    fetch: function(){
+      var todos = JSON.parse( localStorage.getItem('todos') || '[]');
+
+      return todos;
+    },
+    save: function(todos){
+      localStorage.setItem('todos', JSON.stringify(todos) );
+    }
+  }
+
+  new Vue({
+    el:"#app",
+    data:{
+      edit:null,
+      items:"",
+      todos: todos_storage.fetch(),
+      addnewele: "" ,
+      oldEditVal:"",
+      visibility:"all",
+     
+    },
+    computed:{
+      filterdTodos: function(){
+        return filters[ this.visibility ] (this.todos);
+      },
+      numitems:function(){
+        var len =filters.active(this.todos).length;
+        if(len >1){
+          this.items = "items";
+        }else{
+          this.items = "item";
+        }
+        return len;
+      },
+
+       markAll:{
+        
+         get:function(){
+            return this.numitems == 0;
+         },
+         
+       set:function(val) {
+         for (var i = 0; i < this.todos.length; i++) {
+               this.todos[i].compleated =val;         
+        }   
+        }  
+      },
+    },
+    methods:{
+      destroy:function(todo) {
+                this.todos.splice(this.todos.indexOf(todo), 1);
+
+      },
+      addNew:function() {
+             if(this.addnewele == "")
+              return;
+
+               this.todos.push( {
+                'title':this.addnewele,
+                compleated:false
+              });
+          this.addnewele ="";
+      },
+      clearAll:function() {
+             this.todos = filters.active(this.todos);
+      },
+      showEdit:function(todo){
+          this.oldEditVal=todo.title;
+          this.edit =todo;
+      },
+     editing:function(todo){
+      if(todo.title == "")
+             this.todos.splice(this.todos.indexOf(todo), 1);
+
+       this.edit =null;
+     },
+     editingEsc:function(){
+      this.edit.title = this.oldEditVal;
+      this.edit=null;
+     }
+
+    },
+     watch: {
+      todos: {
+        handler: function(todos){
+          todos_storage.save(todos);
+        },
+        deep: true
+      }
+    }
+  })
+
+
+</script>
